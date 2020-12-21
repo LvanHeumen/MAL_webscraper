@@ -4,7 +4,7 @@
 from bs4 import BeautifulSoup
 import requests
 
-url = 'https://myanimelist.net/people/5142/Yui_Ishikawa'
+url = 'https://myanimelist.net/people/8/Rie_Kugimiya'
 response = requests.get(url, timeout=5)
 content = BeautifulSoup(response.content,"html.parser")
 
