@@ -1,3 +1,5 @@
+# A scraper that pulls data from the mobile version of MyAnimeList Voice Actor pages
+
 # Importing required libraries
 from bs4 import BeautifulSoup
 import requests
