@@ -1,42 +1,62 @@
 # A scraper that pulls data from the mobile version of MyAnimeList Voice Actor pages
 
 # Importing required libraries
-from bs4 import BeautifulSoup
-import requests
 import json
+import os
+import re
+import requests
 
-# url = input('Please paste a MyAnimeList url for a voice actor')
-url = 'https://myanimelist.net/people/8/Rie_Kugimiya'
-headers_mobile = {'User-Agent':'Mozilla/5.0 (Linux; Android 7.0; SM-G892A Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/67.0.3396.87 Mobile Safari/537.36'}
-response = requests.get(url, headers = headers_mobile, timeout=5)
-content = BeautifulSoup(response.content,"html.parser")
+from bs4 import BeautifulSoup
 
-seiyuu = content.find('h1', attrs={'class':'title fs18 lh18'}).text
-seiyuu = seiyuu.replace(', ','-')
-fileName = '.\scraped-data\\' + seiyuu + '.json'
+class AnimeScraper():
+    def __init__(self, url='https://myanimelist.net/people/8/Rie_Kugimiya'):
+        self.url = url
+        self.headers_mobile = {'User-Agent':'Mozilla/5.0 (Linux; Android 7.0; SM-G892A Build/NRD90M; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/67.0.3396.87 Mobile Safari/537.36'}
 
-charList = []
+        self.content = self.get_response()
+        self.fileName = self.create_filename()
+        self.charList = self.get_charlist()
 
-for element in content.findAll('div', attrs={'class':'va-slider-item js-ajax-loading'}):
+    def get_response(self):
+        response = requests.get(self.url, headers=self.headers_mobile, timeout=5)
+        content = BeautifulSoup(response.content,'html.parser')
 
-    charLink = element.find('a', attrs={'class':'img-link'}).get('href')
-    charName = element.h3.text
-    charFav = element.span.text
-    if charFav[-1] == 's':
-        charFav = charFav[:-5]
-    else:
-        charFav = charFav[:-4]
+        if content.find('h2').text != 'Voice Acting Roles':
+            raise Exception('Sorry, this is not a voice actor')
+        else: print('Voice Actor found')
 
-    charElement = {
-    'name' : charName,
-    'favs' : int(charFav),
-    'link' : charLink
-    }
+        return content
 
-    if charElement not in charList:
-        charList.append(charElement)
+    def create_filename(self):
+        seiyuu = self.content.find('h1', attrs={'class':'title fs18 lh18'}).text.replace(', ','-')
+        fileName = os.path.join('.', 'scraped-data', f"{seiyuu}.json")
 
-print(f'{len(charList)} Characters found')
+        return fileName
 
-with open(fileName,'w') as outfile:
-    json.dump(charList,outfile)
+
+    def get_charlist(self):
+        charList = []
+        for element in self.content.findAll('div', attrs={'class':'va-slider-item js-ajax-loading'}):
+            charLink = element.find('a', attrs={'class':'img-link'}).get('href')
+            charName = element.h3.text
+            charFavs = element.span.text
+            numFavs = re.sub('\D','',charFavs)
+
+            charElement = {
+            'name': charName,
+            'favs': int(numFavs),
+            'link': charLink
+            }
+
+            if charElement not in charList:
+                charList.append(charElement)
+
+        return charList
+
+    def save_charlist(self):
+        with open(self.fileName,'w') as outfile:
+            json.dump(self.charList,outfile)
+
+if __name__ == '__main__':
+    scraper = AnimeScraper()
+    scraper.save_charlist()
