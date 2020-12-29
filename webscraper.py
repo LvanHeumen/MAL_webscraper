@@ -64,6 +64,8 @@ class AnimeScraper():
         return charList
 
     def save_charlist(self):
+        if not os.path.exists(os.path.join('.','scraped-data')):
+            os.makedirs('scraped-data')
         with open(self.fileName,'w') as outfile:
             json.dump(self.charList,outfile)
         print(f'Scrape successful, data saved to {self.fileName}')
