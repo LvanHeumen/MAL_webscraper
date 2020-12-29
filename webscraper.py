@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # Logger setup
-logging.basicConfig(level=logging.INFO, filename='scraper.log', filemode='w',format='%(asctime)s - %(message)s')
+logging.basicConfig(level=logging.INFO, filename='scraper.log', filemode='w',format='%(asctime)s - %(levelname)s -  %(message)s')
 
 # Class definition
 class AnimeScraper():
@@ -51,7 +51,7 @@ class AnimeScraper():
             numFavs = re.sub('\D','',charFavs)
 
             charElement = {
-            'name': charName,
+            'name': charName.replace(',',''),
             'favs': int(numFavs),
             'link': charLink
             }
@@ -68,6 +68,18 @@ class AnimeScraper():
             json.dump(self.charList,outfile)
         print(f'Scrape successful, data saved to {self.fileName}')
 
+# Top level functions:
+def get_url():                              # Creates a url based on user input
+    baseURL = 'https://myanimelist.net/people/'
+    userIn = input(f'Please enter a full MAL URL, or the number in the URL:')
+    try: int(userIn)
+    except ValueError: url = userIn
+    else: url = baseURL + userIn
+
+    return url
+
+# Main function
 if __name__ == '__main__':
-    scraper = AnimeScraper()
+    url = get_url()
+    scraper = AnimeScraper(url)
     scraper.save_charlist()
